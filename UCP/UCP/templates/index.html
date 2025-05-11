@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title data-i18n="title">Máy Tính Use Case Points</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/i18next@23.11.5/dist/umd/i18next.min.js"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1 data-i18n="header">Máy Tính Use Case Points</h1>
+            <select id="language-select">
+                <option value="vi">Tiếng Việt</option>
+                <option value="en">English</option>
+            </select>
+        </div>
+
+        <div class="content">
+            {% if error %}
+            <div class="error" role="alert">
+                {{ error }}
+            </div>
+            {% endif %}
+
+            <div id="loading" style="display: none; text-align: center; color: #666;">Đang xử lý...</div>
+
+            <form id="ucp-form" method="POST" class="form">
+                <!-- Mô tả hệ thống và nút Gợi ý -->
+                <div class="section">
+                    <h3 data-i18n="system_description">Mô tả hệ thống</h3>
+                    <div class="form-group">
+                        <label data-i18n="system_description_label">Nhập mô tả sơ lược về hệ thống của bạn</label>
+                        <textarea id="system-description" name="system_description" rows="4" placeholder="Ví dụ: Hệ thống quản lý bán hàng với 5 chức năng chính, giao diện đơn giản, tích hợp API thanh toán">{{ data['system_description'] }}</textarea>
+                    </div>
+                    <div class="text-center">
+                        <button type="button" id="suggest-btn" class="suggest-btn" data-i18n="suggest">Gợi ý</button>
+                        <p id="suggest-status" style="display: none; color: #666;"></p>
+                        <p id="classification-notes" style="display: none; color: #666;"></p>
+                    </div>
+                </div>
+
+                <!-- Upload tài liệu -->
+                <div class="section">
+                    <h3 data-i18n="upload_file">Upload Tài liệu</h3>
+                    <div class="form-group">
+                        <input type="file" id="file-upload" accept=".pdf,.txt,.png,.jpg,.jpeg">
+                        <button type="button" id="upload-btn" class="suggest-btn" data-i18n="upload">Upload & Phân tích</button>
+                        <p id="upload-status" style="display: none; color: #666;"></p>
+                        <textarea id="extracted-text" readonly rows="10" style="width: 100%; margin-top: 10px; resize: vertical; overflow-y: auto;"></textarea>
+                        <div id="upload-result"></div>
+                        <p id="upload-classification-notes" style="display: none; color: #666;"></p>
+                    </div>
+                </div>
+
+                <!-- Use Cases -->
+                <div class="section">
+                    <h3 data-i18n="use_cases">Use Cases</h3>
+                    <div class="grid">
+                        <div class="form-group" data-tooltip="tooltip_simple_use_cases">
+                            <label data-i18n="simple_use_cases">Simple Use Cases</label>
+                            <input type="number" name="simple_use_cases" id="simple_use_cases" value="{{ data['simple_use_cases'] | default(0) }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_average_use_cases">
+                            <label data-i18n="average_use_cases">Average Use Cases</label>
+                            <input type="number" name="average_use_cases" id="average_use_cases" value="{{ data['average_use_cases'] | default(0) }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_complex_use_cases">
+                            <label data-i18n="complex_use_cases">Complex Use Cases</label>
+                            <input type="number" name="complex_use_cases" id="complex_use_cases" value="{{ data['complex_use_cases'] | default(0) }}" min="0" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actors -->
+                <div class="section">
+                    <h3 data-i18n="actors">Actors</h3>
+                    <div class="grid">
+                        <div class="form-group" data-tooltip="tooltip_simple_actors">
+                            <label data-i18n="simple_actors">Simple Actors</label>
+                            <input type="number" name="simple_actors" id="simple_actors" value="{{ data['simple_actors'] }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_average_actors">
+                            <label data-i18n="average_actors">Average Actors</label>
+                            <input type="number" name="average_actors" id="average_actors" value="{{ data['average_actors'] }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_complex_actors">
+                            <label data-i18n="complex_actors">Complex Actors</label>
+                            <input type="number" name="complex_actors" id="complex_actors" value="{{ data['complex_actors'] }}" min="0" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Technical Factors (T1-T13) -->
+                <div class="section">
+                    <h3 data-i18n="technical_factors">Yếu tố Kỹ thuật</h3>
+                    <div class="grid">
+                        <div class="form-group" data-tooltip="tooltip_t1">
+                            <label data-i18n="t1">T1: Hệ thống phân tán (0-5)</label>
+                            <input type="number" name="t1" id="t1" value="{{ data['t1'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t2">
+                            <label data-i18n="t2">T2: Yêu cầu hiệu suất cao (0-5)</label>
+                            <input type="number" name="t2" id="t2" value="{{ data['t2'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t3">
+                            <label data-i18n="t3">T3: Hiệu suất sử dụng (0-5)</label>
+                            <input type="number" name="t3" id="t3" value="{{ data['t3'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t4">
+                            <label data-i18n="t4">T4: Xử lý bên trong phức tạp (0-5)</label>
+                            <input type="number" name="t4" id="t4" value="{{ data['t4'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t5">
+                            <label data-i18n="t5">T5: Mã nguồn tái sử dụng (0-5)</label>
+                            <input type="number" name="t5" id="t5" value="{{ data['t5'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t6">
+                            <label data-i18n="t6">T6: Dễ cài đặt (0-5)</label>
+                            <input type="number" name="t6" id="t6" value="{{ data['t6'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t7">
+                            <label data-i18n="t7">T7: Dễ sử dụng (0-5)</label>
+                            <input type="number" name="t7" id="t7" value="{{ data['t7'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t8">
+                            <label data-i18n="t8">T8: Di chuyển phần mềm (0-5)</label>
+                            <input type="number" name="t8" id="t8" value="{{ data['t8'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t9">
+                            <label data-i18n="t9">T9: Dễ thay đổi (0-5)</label>
+                            <input type="number" name="t9" id="t9" value="{{ data['t9'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t10">
+                            <label data-i18n="t10">T10: Sử dụng đồng thời (0-5)</label>
+                            <input type="number" name="t10" id="t10" value="{{ data['t10'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t11">
+                            <label data-i18n="t11">T11: Bảo mật đặc biệt (0-5)</label>
+                            <input type="number" name="t11" id="t11" value="{{ data['t11'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t12">
+                            <label data-i18n="t12">T12: Truy cập bên thứ ba (0-5)</label>
+                            <input type="number" name="t12" id="t12" value="{{ data['t12'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_t13">
+                            <label data-i18n="t13">T13: Đào tạo đặc biệt (0-5)</label>
+                            <input type="number" name="t13" id="t13" value="{{ data['t13'] }}" min="0" max="5" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Environmental Factors (E1-E8) -->
+                <div class="section">
+                    <h3 data-i18n="environmental_factors">Yếu tố Môi trường</h3>
+                    <div class="grid">
+                        <div class="form-group" data-tooltip="tooltip_e1">
+                            <label data-i18n="e1">E1: Kinh nghiệm phát triển với UML (0-5)</label>
+                            <input type="number" name="e1" id="e1" value="{{ data['e1'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e2">
+                            <label data-i18n="e2">E2: Kinh nghiệm phát triển ứng dụng (0-5)</label>
+                            <input type="number" name="e2" id="e2" value="{{ data['e2'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e3">
+                            <label data-i18n="e3">E3: Khả năng phân tích (0-5)</label>
+                            <input type="number" name="e3" id="e3" value="{{ data['e3'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e4">
+                            <label data-i18n="e4">E4: Động lực phát triển (0-5)</label>
+                            <input type="number" name="e4" id="e4" value="{{ data['e4'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e5">
+                            <label data-i18n="e5">E5: Ổn định yêu cầu (0-5)</label>
+                            <input type="number" name="e5" id="e5" value="{{ data['e5'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e6">
+                            <label data-i18n="e6">E6: Sử dụng công cụ phát triển (0-5)</label>
+                            <input type="number" name="e6" id="e6" value="{{ data['e6'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e7">
+                            <label data-i18n="e7">E7: Ràng buộc thời gian (0-5)</label>
+                            <input type="number" name="e7" id="e7" value="{{ data['e7'] }}" min="0" max="5" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_e8">
+                            <label data-i18n="e8">E8: Mức độ quen thuộc với quy trình (0-5)</label>
+                            <input type="number" name="e8" id="e8" value="{{ data['e8'] }}" min="0" max="5" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actual Effort -->
+                <div class="section">
+                    <h3 data-i18n="actual_effort">Actual Effort</h3>
+                    <div class="form-group" data-tooltip="tooltip_actual_effort">
+                        <label data-i18n="actual_effort">Actual Effort (Hours)</label>
+                        <input type="number" step="1" name="actual_effort" id="actual_effort_input" value="{{ data['actual_effort'] }}" min="0" required>
+                        <p class="note" data-i18n="actual_effort_note">Vui lòng nhập công sức thực tế của dự án để tính độ chính xác</p>
+                    </div>
+                </div>
+
+                <!-- Custom Weights -->
+                <div class="section">
+                    <h3 data-i18n="custom_weights">Tùy chỉnh trọng số</h3>
+                    <div class="grid">
+                        <div class="form-group">
+                            <label data-i18n="weights_uc_simple">Simple UC Weight</label>
+                            <input type="number" step="0.1" name="weights_uc_simple" id="weights_uc_simple" value="{{ data['weights_uc_simple']|default(5) }}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="weights_uc_avg">Average UC Weight</label>
+                            <input type="number" step="0.1" name="weights_uc_avg" id="weights_uc_avg" value="{{ data['weights_uc_avg']|default(10) }}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="weights_uc_complex">Complex UC Weight</label>
+                            <input type="number" step="0.1" name="weights_uc_complex" id="weights_uc_complex" value="{{ data['weights_uc_complex']|default(15) }}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="weights_actor_simple">Simple Actor Weight</label>
+                            <input type="number" step="0.1" name="weights_actor_simple" id="weights_actor_simple" value="{{ data['weights_actor_simple']|default(1) }}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="weights_actor_avg">Average Actor Weight</label>
+                            <input type="number" step="0.1" name="weights_actor_avg" id="weights_actor_avg" value="{{ data['weights_actor_avg']|default(2) }}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="weights_actor_complex">Complex Actor Weight</label>
+                            <input type="number" step="0.1" name="weights_actor_complex" id="weights_actor_complex" value="{{ data['weights_actor_complex']|default(3) }}" min="0" required>
+                        </div>
+                        <div class="form-group">
+                            <label data-i18n="hours_per_ucp">Hours per UCP</label>
+                            <input type="number" step="0.1" name="hours_per_ucp" id="hours_per_ucp" value="{{ data['hours_per_ucp']|default(20) }}" min="0" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Team Factors -->
+                <div class="section">
+                    <h3 data-i18n="team_factors">Yếu tố Đội ngũ</h3>
+                    <div class="grid">
+                        <div class="form-group" data-tooltip="tooltip_team_size">
+                            <label data-i18n="team_size">Số lượng thành viên dự án</label>
+                            <input type="number" name="team_size" id="team_size" value="{{ data['team_size'] | default(1) }}" min="1" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_junior_members">
+                            <label data-i18n="junior_members">Số thành viên Junior</label>
+                            <input type="number" name="junior_members" id="junior_members" value="{{ data['junior_members'] | default(0) }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_mid_level_members">
+                            <label data-i18n="mid_level_members">Số thành viên Mid-level</label>
+                            <input type="number" name="mid_level_members" id="mid_level_members" value="{{ data['mid_level_members'] | default(0) }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_senior_members">
+                            <label data-i18n="senior_members">Số thành viên Senior</label>
+                            <input type="number" name="senior_members" id="senior_members" value="{{ data['senior_members'] | default(0) }}" min="0" required>
+                        </div>
+                        <div class="form-group" data-tooltip="tooltip_hourly_cost">
+                            <label data-i18n="hourly_cost">Chi phí trung bình mỗi giờ (USD)</label>
+                            <input type="number" step="0.1" name="hourly_cost" id="hourly_cost" value="{{ data['hourly_cost'] | default(50) }}" min="0" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="text-center">
+                    <button type="submit" class="calculate-btn" data-i18n="calculate">Tính UCP</button>
+                    <button type="button" id="reset-btn" class="reset-btn" data-i18n="reset">Reset</button>
+                </div>
+            </form>
+
+            <div class="results" id="results-section" style="display: none;">
+                <h2 data-i18n="results">Kết quả ước lượng</h2>
+                <div class="grid">
+                    <div class="result-card">
+                        <h3 data-i18n="effort_estimation">Ước lượng công sức</h3>
+                        <p><strong data-i18n="total_ucp">Total UCP:</strong> <span id="ucp-result">N/A</span></p>
+                        <p><strong data-i18n="estimated_effort">Estimated Effort:</strong> <span id="effort-result">N/A hours</span></p>
+                        <p><strong data-i18n="total_cost">Total Cost:</strong> <span id="cost-result">N/A USD</span></p>
+                        <p><strong data-i18n="tcf">TCF:</strong> <span id="tcf-result">N/A</span></p>
+                        <p><strong data-i18n="ef">EF:</strong> <span id="ef-result">N/A</span></p>
+                    </div>
+                    <div class="result-card">
+                        <h3 data-i18n="accuracy">Độ chính xác</h3>
+                        <p><strong data-i18n="actual_effort">Actual Effort:</strong> <span id="actual_effort">N/A hours</span></p>
+                        <p><strong data-i18n="difference">Difference:</strong>
+                            <span id="difference-result">N/A hours</span>
+                        </p>
+                        <p><strong data-i18n="accuracy">Estimation Accuracy:</strong> <span id="accuracy-result">N/A%</span></p>
+                    </div>
+                </div>
+                <canvas id="result-chart" class="chart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log("Checking external libraries...");
+        if (typeof Chart === 'undefined') {
+            console.error("Chart.js failed to load");
+        }
+        if (typeof i18next === 'undefined') {
+            console.error("i18next failed to load");
+        }
+
+        i18next.init({
+            lng: 'vi',
+            resources: {
+                vi: {
+                    translation: {
+                        title: "Máy Tính Use Case Points",
+                        header: "Máy Tính Use Case Points",
+                        system_description: "Mô tả hệ thống",
+                        system_description_label: "Nhập mô tả sơ lược về hệ thống của bạn",
+                        suggest: "Gợi ý",
+                        suggesting: "Đang xử lý...",
+                        upload: "Upload & Phân tích",
+                        uploading: "Đang upload và phân tích...",
+                        upload_file: "Upload Tài liệu",
+                        use_cases: "Use Cases",
+                        simple_use_cases: "Simple Use Cases",
+                        average_use_cases: "Average Use Cases",
+                        complex_use_cases: "Complex Use Cases",
+                        actors: "Actors",
+                        simple_actors: "Simple Actors",
+                        average_actors: "Average Actors",
+                        complex_actors: "Complex Actors",
+                        technical_factors: "Yếu tố Kỹ thuật",
+                        t1: "T1: Hệ thống phân tán",
+                        t2: "T2: Yêu cầu hiệu suất cao",
+                        t3: "T3: Hiệu suất sử dụng",
+                        t4: "T4: Xử lý bên trong phức tạp",
+                        t5: "T5: Mã nguồn tái sử dụng",
+                        t6: "T6: Dễ cài đặt",
+                        t7: "T7: Dễ sử dụng",
+                        t8: "T8: Di chuyển phần mềm",
+                        t9: "T9: Dễ thay đổi",
+                        t10: "T10: Sử dụng đồng thời",
+                        t11: "T11: Bảo mật đặc biệt",
+                        t12: "T12: Truy cập bên thứ ba",
+                        t13: "T13: Đào tạo đặc biệt",
+                        environmental_factors: "Yếu tố Môi trường",
+                        e1: "E1: Kinh nghiệm phát triển với UML",
+                        e2: "E2: Kinh nghiệm phát triển ứng dụng",
+                        e3: "E3: Khả năng phân tích",
+                        e4: "E4: Động lực phát triển",
+                        e5: "E5: Ổn định yêu cầu",
+                        e6: "E6: Sử dụng công cụ phát triển",
+                        e7: "E7: Ràng buộc thời gian",
+                        e8: "E8: Mức độ quen thuộc với quy trình",
+                        actual_effort: "Actual Effort (Hours)",
+                        actual_effort_note: "Vui lòng nhập công sức thực tế của dự án để tính độ chính xác",
+                        custom_weights: "Tùy chỉnh trọng số",
+                        weights_uc_simple: "Simple UC Weight",
+                        weights_uc_avg: "Average UC Weight",
+                        weights_uc_complex: "Complex UC Weight",
+                        weights_actor_simple: "Simple Actor Weight",
+                        weights_actor_avg: "Average Actor Weight",
+                        weights_actor_complex: "Complex Actor Weight",
+                        hours_per_ucp: "Hours per UCP",
+                        calculate: "Tính UCP",
+                        reset: "Reset",
+                        results: "Kết quả ước lượng",
+                        effort_estimation: "Ước lượng công sức",
+                        total_ucp: "Total UCP:",
+                        estimated_effort: "Estimated Effort:",
+                        tcf: "Technical Complexity Factor (TCF):",
+                        ef: "Environmental Factor (EF):",
+                        accuracy: "Độ chính xác",
+                        actual_effort: "Actual Effort:",
+                        difference: "Difference:",
+                        print_report: "In báo cáo",
+                        tooltip_simple_use_cases: "Use case đơn giản, dưới 3 bước giao dịch",
+                        tooltip_average_use_cases: "Use case trung bình, từ 3-7 bước giao dịch",
+                        tooltip_complex_use_cases: "Use case phức tạp, trên 7 bước giao dịch",
+                        tooltip_simple_actors: "Actor tương tác qua API hoặc giao diện đơn giản",
+                        tooltip_average_actors: "Actor tương tác qua giao diện người dùng",
+                        tooltip_complex_actors: "Actor tương tác qua nhiều hệ thống phức tạp",
+                        tooltip_t1: "Hệ thống phân tán (trọng số: 2.0)",
+                        tooltip_t2: "Yêu cầu hiệu suất cao (trọng số: 1.0)",
+                        tooltip_t3: "Hiệu suất sử dụng (trọng số: 1.0)",
+                        tooltip_t4: "Xử lý bên trong phức tạp (trọng số: 1.0)",
+                        tooltip_t5: "Mã nguồn tái sử dụng (trọng số: 1.0)",
+                        tooltip_t6: "Dễ cài đặt (trọng số: 0.5)",
+                        tooltip_t7: "Dễ sử dụng (trọng số: 0.5)",
+                        tooltip_t8: "Di chuyển phần mềm (trọng số: 2.0)",
+                        tooltip_t9: "Dễ thay đổi (trọng số: 1.0)",
+                        tooltip_t10: "Sử dụng đồng thời (trọng số: 1.0)",
+                        tooltip_t11: "Bảo mật đặc biệt (trọng số: 1.0)",
+                        tooltip_t12: "Truy cập bên thứ ba (trọng số: 1.0)",
+                        tooltip_t13: "Đào tạo đặc biệt (trọng số: 1.0)",
+                        tooltip_e1: "Kinh nghiệm phát triển với UML (trọng số: 1.5)",
+                        tooltip_e2: "Kinh nghiệm phát triển ứng dụng (trọng số: 0.5)",
+                        tooltip_e3: "Khả năng phân tích (trọng số: 1.0)",
+                        tooltip_e4: "Động lực phát triển (trọng số: 1.0)",
+                        tooltip_e5: "Ổn định yêu cầu (trọng số: 2.0)",
+                        tooltip_e6: "Sử dụng công cụ phát triển (trọng số: 1.0)",
+                        tooltip_e7: "Ràng buộc thời gian (trọng số: -1.0)",
+                        tooltip_e8: "Mức độ quen thuộc với quy trình (trọng số: -1.0)",
+                        tooltip_actual_effort: "Công sức thực tế của dự án (giờ)",
+                        use_case_warning: "Cảnh báo: Các trường Use Case không được cập nhật từ dữ liệu upload. Vui lòng kiểm tra hoặc nhập thủ công.",
+                        team_factors: "Yếu tố Đội ngũ",
+                        team_size: "Số lượng thành viên dự án",
+                        junior_members: "Số thành viên Junior",
+                        mid_level_members: "Số thành viên Mid-level",
+                        senior_members: "Số thành viên Senior",
+                        hourly_cost: "Chi phí trung bình mỗi giờ (USD)",
+                        total_cost: "Total Cost:",
+                        tooltip_team_size: "Tổng số thành viên tham gia dự án, bao gồm lập trình viên, nhà phân tích, tester, v.v.",
+                        tooltip_junior_members: "Số lượng thành viên có kinh nghiệm dưới 2 năm",
+                        tooltip_mid_level_members: "Số lượng thành viên có kinh nghiệm từ 2-5 năm",
+                        tooltip_senior_members: "Số lượng thành viên có kinh nghiệm trên 5 năm",
+                        tooltip_hourly_cost: "Chi phí trung bình mỗi giờ làm việc của đội ngũ (USD)"
+                    }
+                },
+                en: {
+                    translation: {
+                        title: "Use Case Points Calculator",
+                        header: "Use Case Points Calculator",
+                        system_description: "System Description",
+                        system_description_label: "Enter a brief description of your system",
+                        suggest: "Suggest",
+                        suggesting: "Processing...",
+                        upload: "Upload & Analyze",
+                        uploading: "Uploading and analyzing...",
+                        upload_file: "Upload Document",
+                        use_cases: "Use Cases",
+                        simple_use_cases: "Simple Use Cases",
+                        average_use_cases: "Average Use Cases",
+                        complex_use_cases: "Complex Use Cases",
+                        actors: "Actors",
+                        simple_actors: "Simple Actors",
+                        average_actors: "Average Actors",
+                        complex_actors: "Complex Actors",
+                        technical_factors: "Technical Factors",
+                        t1: "T1: Distributed System",
+                        t2: "T2: High Performance Requirements",
+                        t3: "T3: End User Efficiency",
+                        t4: "T4: Complex Internal Processing",
+                        t5: "T5: Code Reusability",
+                        t6: "T6: Easy to Install",
+                        t7: "T7: Easy to Use",
+                        t8: "T8: Portability",
+                        t9: "T9: Easy to Change",
+                        t10: "T10: Concurrent Use",
+                        t11: "T11: Special Security Features",
+                        t12: "T12: Third-Party Access",
+                        t13: "T13: Special Training Documentation",
+                        environmental_factors: "Environmental Factors",
+                        e1: "E1: Experience with UML Development",
+                        e2: "E2: Application Development Experience",
+                        e3: "E3: Analysis Capability",
+                        e4: "E4: Team Motivation",
+                        e5: "E5: Requirement Stability",
+                        e6: "E6: Use of Development Tools",
+                        e7: "E7: Time Constraints",
+                        e8: "E8: Familiarity with Process",
+                        actual_effort: "Actual Effort (Hours)",
+                        actual_effort_note: "Please enter the actual effort of the project to calculate accuracy",
+                        custom_weights: "Custom Weights",
+                        weights_uc_simple: "Simple UC Weight",
+                        weights_uc_avg: "Average UC Weight",
+                        weights_uc_complex: "Complex UC Weight",
+                        weights_actor_simple: "Simple Actor Weight",
+                        weights_actor_avg: "Average Actor Weight",
+                        weights_actor_complex: "Complex Actor Weight",
+                        hours_per_ucp: "Hours per UCP",
+                        calculate: "Calculate UCP",
+                        reset: "Reset",
+                        results: "Estimation Results",
+                        effort_estimation: "Effort Estimation",
+                        total_ucp: "Total UCP:",
+                        estimated_effort: "Estimated Effort:",
+                        tcf: "Technical Complexity Factor (TCF):",
+                        ef: "Environmental Factor (EF):",
+                        accuracy: "Accuracy",
+                        actual_effort: "Actual Effort:",
+                        difference: "Difference:",
+                        print_report: "Print Report",
+                        tooltip_simple_use_cases: "Simple use case, under 3 transaction steps",
+                        tooltip_average_use_cases: "Average use case, 3-7 transaction steps",
+                        tooltip_complex_use_cases: "Complex use case, over 7 transaction steps",
+                        tooltip_simple_actors: "Actor interacting via API or simple interface",
+                        tooltip_average_actors: "Actor interacting via user interface",
+                        tooltip_complex_actors: "Actor interacting with multiple complex systems",
+                        tooltip_t1: "Distributed system (weight: 2.0)",
+                        tooltip_t2: "High performance requirements (weight: 1.0)",
+                        tooltip_t3: "End user efficiency (weight: 1.0)",
+                        tooltip_t4: "Complex internal processing (weight: 1.0)",
+                        tooltip_t5: "Code reusability (weight: 1.0)",
+                        tooltip_t6: "Easy to install (weight: 0.5)",
+                        tooltip_t7: "Easy to use (weight: 0.5)",
+                        tooltip_t8: "Portability (weight: 2.0)",
+                        tooltip_t9: "Easy to change (weight: 1.0)",
+                        tooltip_t10: "Concurrent use (weight: 1.0)",
+                        tooltip_t11: "Special security features (weight: 1.0)",
+                        tooltip_t12: "Third-party access (weight: 1.0)",
+                        tooltip_t13: "Special training documentation (weight: 1.0)",
+                        tooltip_e1: "Experience with UML development (weight: 1.5)",
+                        tooltip_e2: "Application development experience (weight: 0.5)",
+                        tooltip_e3: "Analysis capability (weight: 1.0)",
+                        tooltip_e4: "Team motivation (weight: 1.0)",
+                        tooltip_e5: "Requirement stability (weight: 2.0)",
+                        tooltip_e6: "Use of development tools (weight: 1.0)",
+                        tooltip_e7: "Time constraints (weight: -1.0)",
+                        tooltip_e8: "Familiarity with process (weight: -1.0)",
+                        tooltip_actual_effort: "Actual effort of the project (hours)",
+                        use_case_warning: "Warning: Use Case fields were not updated from uploaded data. Please check or enter manually.",
+                        team_factors: "Team Factors",
+                        team_size: "Number of Team Members",
+                        junior_members: "Number of Junior Members",
+                        mid_level_members: "Number of Mid-level Members",
+                        senior_members: "Number of Senior Members",
+                        hourly_cost: "Average Hourly Cost (USD)",
+                        total_cost: "Total Cost:",
+                        tooltip_team_size: "Total number of team members involved in the project, including developers, analysts, testers, etc.",
+                        tooltip_junior_members: "Number of team members with less than 2 years of experience",
+                        tooltip_mid_level_members: "Number of team members with 2-5 years of experience",
+                        tooltip_senior_members: "Number of team members with more than 5 years of experience",
+                        tooltip_hourly_cost: "Average hourly cost of the team's work (USD)"
+                    }
+                }
+            }
+        }, function(err, t) {
+            console.log("i18next initialized");
+            if (err) {
+                console.error("i18next initialization failed:", err);
+            }
+            updateContent();
+        });
+
+        function updateContent() {
+            console.log("Updating content with i18next");
+            document.querySelectorAll('[data-i18n]').forEach(element => {
+                element.innerText = i18next.t(element.dataset.i18n);
+            });
+
+            document.querySelectorAll('[data-tooltip]').forEach(element => {
+                const tooltipKey = element.dataset.tooltip;
+                element.setAttribute('title', i18next.t(tooltipKey));
+            });
+        }
+
+        document.getElementById('language-select').addEventListener('change', (e) => {
+            console.log("Language changed to:", e.target.value);
+            i18next.changeLanguage(e.target.value, updateContent);
+        });
+
+        const inputs = document.querySelectorAll('input[type="number"]');
+        inputs.forEach(input => {
+            input.addEventListener('focus', function() {
+                if (this.value === '0') {
+                    this.value = '';
+                }
+            });
+            input.addEventListener('blur', function() {
+                if (this.value === '') {
+                    this.value = '0';
+                }
+            });
+        });
+
+        const form = document.getElementById('ucp-form');
+        let lastUploadedData = null;
+
+        if (!form) {
+            console.error("Form element not found!");
+        } else {
+            form.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                console.log("Calculate form submitted");
+                inputs.forEach(input => {
+                    if (input.value === '') {
+                        input.value = '0';
+                    }
+                });
+
+                const formData = new FormData(form);
+                let data = Object.fromEntries(formData);
+                if (lastUploadedData) {
+                    ['simple_use_cases', 'average_use_cases', 'complex_use_cases'].forEach(field => {
+                        if (parseFloat(data[field]) === 0 && lastUploadedData[field] !== undefined) {
+                            console.log(`Overriding ${field} with uploaded value: ${lastUploadedData[field]}`);
+                            data[field] = lastUploadedData[field].toString();
+                        }
+                    });
+                }
+                console.log("Form data:", data);
+
+                try {
+                    document.getElementById('loading').style.display = 'block';
+                    const response = await fetch('/calculate', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify(data)
+                    });
+
+                    console.log("Calculate response status:", response.status);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Không thể tính toán');
+                    }
+
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+
+                    console.log("Calculate result:", result);
+                    updateResultsDisplay(result);
+                    localStorage.setItem('ucpFormData', JSON.stringify(data));
+                    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth' });
+                } catch (e) {
+                    console.error("Calculate error:", e.message);
+                    document.getElementById('upload-result').innerHTML = `<p class="error">Lỗi khi tính toán: ${e.message}</p>`;
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            });
+
+            form.addEventListener('input', () => {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData);
+                localStorage.setItem('ucpFormData', JSON.stringify(data));
+            });
+        }
+
+        window.onload = () => {
+            console.log("Restoring form data from localStorage");
+            const savedData = localStorage.getItem('ucpFormData');
+            if (savedData && !lastUploadedData) {
+                const data = JSON.parse(savedData);
+                Object.keys(data).forEach(key => {
+                    const input = form.querySelector(`[name="${key}"]`);
+                    if (input) input.value = data[key];
+                });
+            }
+        };
+
+        function debounce(func, wait) {
+            let timeout;
+            return function (...args) {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(this, args), wait);
+            };
+        }
+
+        function updateResultsDisplay(result) {
+            console.log("Updating results display with:", result);
+            const resultsSection = document.getElementById('results-section');
+            if (!resultsSection) {
+                console.warn("Results section not found in DOM");
+                return;
+            }
+
+            const elements = {
+                'ucp-result': result.ucp,
+                'effort-result': `${result.effort} hours`,
+                'tcf-result': result.tcf,
+                'ef-result': result.ef,
+                'actual_effort': `${result.actual_effort} hours`,
+                'difference-result': `${result.difference} hours`,
+                'accuracy-result': `${result.accuracy}%`,
+                'cost-result': `${result.total_cost} USD`
+            };
+
+            Object.keys(elements).forEach(id => {
+                const element = document.getElementById(id);
+                if (element) {
+                    element.innerText = elements[id];
+                    if (id === 'difference-result') {
+                        element.className = result.difference >= 0 ? 'text-green' : 'text-red';
+                    }
+                } else {
+                    console.warn(`Element with id ${id} not found`);
+                }
+            });
+
+            resultsSection.style.display = 'block';
+            updateChart(result);
+        }
+
+        function updateChart(result) {
+            console.log("Updating chart with result:", result);
+            const ctx = document.getElementById('result-chart')?.getContext('2d');
+            if (!ctx) {
+                console.warn("Chart canvas not found");
+                return;
+            }
+
+            if (window.myChart) {
+                window.myChart.destroy();
+            }
+            window.myChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: [i18next.t('estimated_effort'), i18next.t('actual_effort')],
+                    datasets: [{
+                        label: 'Effort (Hours)',
+                        data: [result.effort, result.actual_effort],
+                        backgroundColor: ['#3b82f6', '#10b981'],
+                        borderColor: ['#1d4ed8', '#059669'],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Hours'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `${context.dataset.label}: ${context.parsed.y} hours`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        function updateInputField(field, value) {
+            const selectors = [
+                `#${field}`,
+                `[name="${field}"]`,
+                field === 'system_description' ? '#system-description' : null,
+                field === 'actual_effort' ? '#actual_effort_input' : null
+            ].filter(Boolean);
+
+            let element = null;
+
+            for (let selector of selectors) {
+                element = document.querySelector(selector);
+                if (element) break;
+            }
+
+            if (!element) {
+                console.error(`Input for ${field} not found. Tried selectors:`, selectors);
+                return false;
+            }
+
+            if (value !== undefined && value !== null) {
+                console.log(`Updating ${field} with value: ${value}`);
+                element.value = value.toString();
+                element.setAttribute('value', value.toString());
+                
+                ['input', 'change', 'blur'].forEach(eventType => {
+                    element.dispatchEvent(new Event(eventType, { bubbles: true }));
+                });
+                
+                console.log(`${field} value after update: ${element.value}`);
+                return true;
+            }
+            
+            console.warn(`No valid value provided for ${field}: ${value}`);
+            return false;
+        }
+
+        function updateAllFields(analysis) {
+            const fieldsToUpdate = [
+                'system_description', 
+                'simple_use_cases', 
+                'average_use_cases', 
+                'complex_use_cases',
+                'simple_actors',
+                'average_actors', 
+                'complex_actors',
+                'weights_uc_simple',
+                'weights_uc_avg', 
+                'weights_uc_complex',
+                'weights_actor_simple',
+                'weights_actor_avg', 
+                'weights_actor_complex',
+                'hours_per_ucp',
+                'actual_effort',
+                'team_size',
+                'junior_members',
+                'mid_level_members',
+                'senior_members',
+                'hourly_cost',
+                't1', 't2', 't3', 't4', 't5', 't6', 't7', 't8', 't9', 't10', 't11', 't12', 't13',
+                'e1', 'e2', 'e3', 'e4', 'e5', 'e6', 'e7', 'e8'
+            ];
+
+            let hasData = false;
+
+            fieldsToUpdate.forEach(field => {
+                if (analysis.hasOwnProperty(field)) {
+                    const updated = updateInputField(field, analysis[field]);
+                    hasData = hasData || updated;
+                    console.log(`Field ${field} update status: ${updated}`);
+                } else {
+                    console.warn(`Field ${field} not found in analysis data`);
+                }
+            });
+
+            console.log(`updateAllFields result: hasData = ${hasData}`);
+            return hasData;
+        }
+
+        function retryUpdateFields(analysis, maxRetries = 5) {
+            let retryCount = 0;
+            
+            const retryInterval = setInterval(() => {
+                console.log(`Retry attempt ${retryCount + 1} for updating fields`);
+                
+                const updated = updateAllFields(analysis);
+                
+                if (updated || retryCount >= maxRetries) {
+                    console.log(`Stopping retry: updated=${updated}, retryCount=${retryCount}`);
+                    clearInterval(retryInterval);
+                }
+                
+                retryCount++;
+            }, 500);
+        }
+
+        const suggestBtn = document.getElementById('suggest-btn');
+        if (!suggestBtn) {
+            console.error("Suggest button not found!");
+        } else {
+            const handleSuggest = debounce(async () => {
+                console.log("Suggest button clicked");
+                const description = document.getElementById('system-description').value.trim();
+                const statusElement = document.getElementById('suggest-status');
+                const notesElement = document.getElementById('classification-notes');
+                
+                if (!description) {
+                    console.warn("System description is empty");
+                    alert(i18next.t('system_description_label') + ' không được để trống!');
+                    return;
+                }
+                
+                statusElement.style.display = 'block';
+                statusElement.innerText = i18next.t('suggesting');
+                statusElement.style.color = '#666';
+                notesElement.style.display = 'none';
+                
+                try {
+                    document.getElementById('loading').style.display = 'block';
+                    const response = await fetch('/suggest', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json'
+                        },
+                        body: JSON.stringify({ system_description: description })
+                    });
+                    
+                    console.log("Suggest response status:", response.status);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Không thể lấy gợi ý từ server');
+                    }
+                    
+                    const suggestion = await response.json();
+                    if (suggestion.error) {
+                        throw new Error(suggestion.error);
+                    }
+
+                    console.log("Suggest result:", suggestion);
+                    lastUploadedData = suggestion;
+
+                    const hasData = updateAllFields(suggestion);
+
+                    if (!hasData) {
+                        console.error("No valid data updated from suggestion");
+                        throw new Error('Không tìm thấy dữ liệu hợp lệ trong gợi ý');
+                    }
+
+                    if (suggestion.classification_notes) {
+                        notesElement.style.display = 'block';
+                        notesElement.innerText = `Ghi chú phân loại: ${suggestion.classification_notes}`;
+                    }
+                    
+                    statusElement.style.display = 'none';
+                    retryUpdateFields(suggestion);
+                    setTimeout(async () => await autoCalculate(), 1000);
+                } catch (e) {
+                    console.error("Suggest error:", e.message);
+                    statusElement.innerText = `Lỗi: ${e.message || 'Hệ thống gợi ý tạm thời không khả dụng'}`;
+                    statusElement.style.color = '#dc2626';
+                    setTimeout(() => {
+                        statusElement.style.display = 'none';
+                    }, 5000);
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            }, 500);
+
+            suggestBtn.addEventListener('click', handleSuggest);
+        }
+
+        async function autoCalculate() {
+            console.log("Auto calculating UCP");
+            const formData = new FormData(form);
+            let data = Object.fromEntries(formData);
+            if (lastUploadedData) {
+                ['simple_use_cases', 'average_use_cases', 'complex_use_cases'].forEach(field => {
+                    if (parseFloat(data[field]) === 0 && lastUploadedData[field] !== undefined) {
+                        console.log(`Overriding ${field} with uploaded value: ${lastUploadedData[field]}`);
+                        data[field] = lastUploadedData[field].toString();
+                    }
+                });
+            }
+            console.log("Auto calculate form data (sent to /calculate):", data);
+        
+            const useCaseFields = ['simple_use_cases', 'average_use_cases', 'complex_use_cases'];
+            const allUseCasesZero = useCaseFields.every(field => parseFloat(data[field]) === 0);
+            if (allUseCasesZero && lastUploadedData) {
+                console.warn("All Use Case fields are 0 in data sent to /calculate");
+                document.getElementById('upload-result').innerHTML = `<p class="error">${i18next.t('use_case_warning')}</p>`;
+            }
+        
+            try {
+                document.getElementById('loading').style.display = 'block';
+                const response = await fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json'
+                    },
+                    body: JSON.stringify(data)
+                });
+        
+                console.log("Auto calculate response status:", response.status);
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Không thể tính toán');
+                }
+        
+                const result = await response.json();
+                if (result.error) {
+                    throw new Error(result.error);
+                }
+        
+                console.log("Auto calculate result:", result);
+                updateResultsDisplay(result);
+                document.getElementById('results-section')?.scrollIntoView({ behavior: 'smooth' });
+            } catch (e) {
+                console.error("Auto calculate error:", e.message);
+                document.getElementById('upload-result').innerHTML = `<p class="error">Lỗi khi tự động tính toán: ${e.message}</p>`;
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        const uploadBtn = document.getElementById('upload-btn');
+        if (!uploadBtn) {
+            console.error('Upload button not found!');
+        } else {
+            uploadBtn.addEventListener('click', async () => {
+                console.log("Upload button clicked");
+                try {
+                    document.getElementById('loading').style.display = 'block';
+                    const fileInput = document.getElementById('file-upload');
+                    const file = fileInput.files[0];
+                    const uploadResult = document.getElementById('upload-result');
+                    const uploadStatus = document.getElementById('upload-status');
+                    const extractedText = document.getElementById('extracted-text');
+                    const notesElement = document.getElementById('upload-classification-notes');
+                    
+                    if (!file) {
+                        console.warn("No file selected for upload");
+                        alert('Vui lòng chọn một tệp để upload!');
+                        document.getElementById('loading').style.display = 'none';
+                        return;
+                    }
+                    
+                    uploadStatus.style.display = 'block';
+                    uploadStatus.innerText = i18next.t('uploading');
+                    uploadStatus.style.color = '#666';
+                    uploadResult.innerHTML = '';
+                    extractedText.value = '';
+                    notesElement.style.display = 'none';
+                    
+                    const formData = new FormData();
+                    formData.append('file', file);
+                    
+                    const response = await fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    console.log("Upload response status:", response.status);
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Không thể upload tệp');
+                    }
+                    
+                    const result = await response.json();
+                    if (result.error) {
+                        throw new Error(result.error);
+                    }
+                    
+                    console.log("Upload result:", result);
+                    lastUploadedData = result;
+                    
+                    extractedText.value = result.extracted_text || '';
+                    const hasData = updateAllFields(result);
+                    
+                    if (!hasData) {
+                        console.error("No valid data updated from upload");
+                        throw new Error('Không tìm thấy dữ liệu hợp lệ trong phân tích');
+                    }
+                    
+                    if (result.classification_notes) {
+                        notesElement.style.display = 'block';
+                        notesElement.innerText = `Ghi chú phân loại: ${result.classification_notes}`;
+                    }
+                    
+                    uploadStatus.style.display = 'none';
+                    retryUpdateFields(result);
+                    setTimeout(async () => await autoCalculate(), 1000);
+                } catch (e) {
+                    console.error("Upload error:", e.message);
+                    uploadStatus.innerText = `Lỗi: ${e.message || 'Hệ thống phân tích tạm thời không khả dụng'}`;
+                    uploadStatus.style.color = '#dc2626';
+                    setTimeout(() => {
+                        uploadStatus.style.display = 'none';
+                    }, 5000);
+                } finally {
+                    document.getElementById('loading').style.display = 'none';
+                }
+            });
+        }
+
+        const resetBtn = document.getElementById('reset-btn');
+        if (resetBtn) {
+            resetBtn.addEventListener('click', () => {
+                console.log("Reset button clicked");
+                form.reset();
+                lastUploadedData = null;
+                localStorage.removeItem('ucpFormData');
+                document.getElementById('results-section').style.display = 'none';
+                document.getElementById('classification-notes').innerText = '';
+                document.getElementById('classification-notes').style.display = 'none'; // Ẩn phần tử
+                document.getElementById('upload-result').innerHTML = '';
+                document.getElementById('extracted-text').value = '';
+                document.getElementById('upload-status').style.display = 'none';
+                document.getElementById('suggest-status').style.display = 'none';
+                document.getElementById('classification-notes').style.display = 'none';
+                document.getElementById('upload-classification-notes').style.display = 'none';
+                
+                inputs.forEach(input => {
+                    if (input.name === 'team_size') input.value = '1';
+                    else if (input.name === 'weights_uc_simple') input.value = '5';
+                    else if (input.name === 'weights_uc_avg') input.value = '10';
+                    else if (input.name === 'weights_uc_complex') input.value = '15';
+                    else if (input.name === 'weights_actor_simple') input.value = '1';
+                    else if (input.name === 'weights_actor_avg') input.value = '2';
+                    else if (input.name === 'weights_actor_complex') input.value = '3';
+                    else if (input.name === 'hours_per_ucp') input.value = '20';
+                    else if (input.name === 'hourly_cost') input.value = '50';
+                    else if (input.name === 'junior_members') input.value = '0';
+                    else if (input.name === 'mid_level_members') input.value = '0';
+                    else if (input.name === 'senior_members') input.value = '0';
+                    else input.value = '0';
+                });
+                
+                document.getElementById('system-description').value = '';
+            });
+        }
+    </script>
+</body>
+</html>
