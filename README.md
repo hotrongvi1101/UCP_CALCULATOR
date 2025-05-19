@@ -24,8 +24,6 @@ Dự án này là một ứng dụng web được xây dựng bằng Flask (Pyth
     * [Tích hợp Gemini API](#tích-hợp-gemini-api)
     * [Trích xuất văn bản](#trích-xuất-văn-bản)
     * [Xử lý lỗi và Dự phòng](#xử-lý-lỗi-và-dự-phòng)
-* [Đóng góp](#đóng-góp)
-* [Giấy phép](#giấy-phép)
 
 ## Giới thiệu
 
@@ -261,9 +259,3 @@ Công thức tính toán UCP được triển khai trong route `/calculate` củ
     * Cố gắng parse JSON. Nếu thất bại, sử dụng `json_repair.loads()` để thử sửa lỗi JSON.
     * Nếu việc sửa lỗi JSON cũng thất bại, ứng dụng có một cơ chế **fallback parsing** (`fallback_parse_content`). Hàm này cố gắng trích xuất thông tin cơ bản từ văn bản thô bằng cách sử dụng biểu thức chính quy (regex) để tìm các từ khóa liên quan đến use case, actor, và các yếu tố kỹ thuật/môi trường. Đây là một giải pháp dự phòng khi Gemini API trả về định dạng không mong muốn hoặc không phải JSON.
 * **Giao diện người dùng:** Hiển thị thông báo lỗi cho người dùng khi có sự cố.
-
-## Đóng góp
-
-Nếu bạn muốn đóng góp cho dự án, vui lòng fork repository, tạo một nhánh mới cho tính năng hoặc sửa lỗi của bạn, và sau đó tạo một Pull Request.
-
-## Giấy phép
