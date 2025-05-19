@@ -201,3 +201,69 @@ Phần "Kết quả ước lượng" sẽ hiển thị:
 Chọn ngôn ngữ (Tiếng Việt hoặc English) từ menu dropdown ở góc trên bên phải để thay đổi ngôn ngữ hiển thị của toàn bộ trang.
 
 ## Cấu trúc Dự án
+├── app.py                    # Logic backend Flask
+├── templates/
+│   └── index.html            # Template HTML cho giao diện người dùng
+├── static/
+│   └── css/
+│       └── styles.css        # (Giả định) File CSS cho styling
+├── .env                      # File chứa biến môi trường (ví dụ: GEMINI_API_KEY)
+├── requirements.txt          # Danh sách các thư viện Python cần thiết
+└── README.md                 # Tài liệu này
+
+## Chi tiết Kỹ thuật
+
+### Tính toán UCP
+
+Công thức tính toán UCP được triển khai trong route `/calculate` của `app.py`:
+
+1.  **Unadjusted Use Case Weight (UUCW):**
+    `UUCW = (simple_uc * weight_simple_uc) + (average_uc * weight_avg_uc) + (complex_uc * weight_complex_uc)`
+2.  **Unadjusted Actor Weight (UAW):**
+    `UAW = (simple_actor * weight_simple_actor) + (average_actor * weight_avg_actor) + (complex_actor * weight_complex_actor)`
+3.  **Technical Complexity Factor (TCF):**
+    `TF = sum(Ti_value * Ti_weight)` (với T1-T13 và trọng số tương ứng của chúng)
+    `TCF = 0.6 + (0.01 * TF)`
+4.  **Environmental Factor (EF):**
+    `EF_Factor = sum(Ei_value * Ei_weight)` (với E1-E8 và trọng số tương ứng của chúng)
+    `EF = 1.4 + (-0.03 * EF_Factor)`
+5.  **Use Case Points (UCP):**
+    `UCP = (UUCW + UAW) * TCF * EF`
+6.  **Adjusted Hours per UCP:**
+    Số giờ mỗi UCP (`hours_per_ucp`) được điều chỉnh dựa trên kinh nghiệm trung bình của đội ngũ:
+    `avg_effort_multiplier = (junior_members * 1.42 + mid_level_members * 1.00 + senior_members * 0.71) / total_members`
+    `adjusted_hours_per_ucp = hours_per_ucp * avg_effort_multiplier`
+    (Hệ số 1.42, 1.00, 0.71 được lấy cảm hứng từ các hệ số PERS trong COCOMO II cho năng lực đội ngũ).
+7.  **Estimated Effort:**
+    `Effort = UCP * adjusted_hours_per_ucp`
+8.  **Total Cost:**
+    `Total_Cost = Effort * hourly_cost`
+
+### Tích hợp Gemini API
+
+* Ứng dụng sử dụng Gemini API (model `gemini-2.0-flash`) để phân tích mô tả hệ thống hoặc văn bản trích xuất.
+* Một prompt chi tiết được gửi đến API, yêu cầu trả về kết quả dưới dạng JSON với cấu trúc cụ thể bao gồm các trường UCP, yếu tố kỹ thuật/môi trường, thông tin đội ngũ, và ghi chú phân loại.
+* Hàm `call_gemini_api` trong `app.py` xử lý việc gửi request và nhận response.
+
+### Trích xuất văn bản
+
+* `extract_text_from_pdf(file)`: Sử dụng `PyPDF2` để đọc nội dung văn bản từ các trang của file PDF.
+* `extract_text_from_image(file_path)`: Sử dụng `textract` (với Tesseract OCR) để trích xuất văn bản từ file hình ảnh. Hàm này cũng thử nhiều encoding khác nhau để đảm bảo văn bản được giải mã chính xác.
+* File TXT được đọc trực tiếp và giải mã bằng UTF-8.
+
+### Xử lý lỗi và Dự phòng
+
+* **API Key:** Kiểm tra sự tồn tại của `GEMINI_API_KEY`.
+* **File Upload:** Kiểm tra định dạng file, sự tồn tại của file.
+* **Trích xuất văn bản:** Xử lý lỗi nếu không thể trích xuất văn bản.
+* **Gemini API Response:**
+    * Kiểm tra status code của response.
+    * Cố gắng parse JSON. Nếu thất bại, sử dụng `json_repair.loads()` để thử sửa lỗi JSON.
+    * Nếu việc sửa lỗi JSON cũng thất bại, ứng dụng có một cơ chế **fallback parsing** (`fallback_parse_content`). Hàm này cố gắng trích xuất thông tin cơ bản từ văn bản thô bằng cách sử dụng biểu thức chính quy (regex) để tìm các từ khóa liên quan đến use case, actor, và các yếu tố kỹ thuật/môi trường. Đây là một giải pháp dự phòng khi Gemini API trả về định dạng không mong muốn hoặc không phải JSON.
+* **Giao diện người dùng:** Hiển thị thông báo lỗi cho người dùng khi có sự cố.
+
+## Đóng góp
+
+Nếu bạn muốn đóng góp cho dự án, vui lòng fork repository, tạo một nhánh mới cho tính năng hoặc sửa lỗi của bạn, và sau đó tạo một Pull Request.
+
+## Giấy phép
