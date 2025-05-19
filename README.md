@@ -1,140 +1,203 @@
-Máy Tính Use Case Points (UCP)
-Mô tả dự án
-Máy Tính Use Case Points (UCP) là một ứng dụng web được xây dựng để hỗ trợ ước lượng công sức phát triển phần mềm dựa trên phương pháp Use Case Points. Ứng dụng cho phép người dùng nhập mô tả hệ thống, upload tài liệu (PDF, TXT, hoặc hình ảnh), và tự động phân tích để đưa ra các thông số UCP như số lượng use cases, actors, yếu tố kỹ thuật, yếu tố môi trường, và đội ngũ phát triển. Kết quả bao gồm công sức ước lượng, chi phí, và độ chính xác so với công sức thực tế.
-Ứng dụng sử dụng Flask làm backend, tích hợp API Gemini để phân tích văn bản tự nhiên, và giao diện người dùng được xây dựng với HTML, CSS, JavaScript, cùng với các thư viện Chart.js và i18next để hỗ trợ biểu đồ và đa ngôn ngữ (Tiếng Việt và Tiếng Anh).
-Tính năng chính
+# Máy Tính Use Case Points (UCP) Nâng Cao với Gợi ý AI
 
-Nhập mô tả hệ thống: Người dùng có thể nhập mô tả hệ thống và nhận gợi ý về các thông số UCP thông qua API Gemini.
-Upload tài liệu: Hỗ trợ upload file PDF, TXT, hoặc hình ảnh (PNG, JPG, JPEG) để trích xuất và phân tích nội dung tự động.
-Tính toán UCP: Tính toán điểm UCP, công sức ước lượng (giờ), chi phí (USD), và độ chính xác dựa trên công sức thực tế.
-Tùy chỉnh trọng số: Cho phép tùy chỉnh trọng số cho use cases, actors, và số giờ mỗi UCP.
-Hỗ trợ đa ngôn ngữ: Giao diện hỗ trợ Tiếng Việt và Tiếng Anh với i18next.
-Trực quan hóa kết quả: Hiển thị kết quả dưới dạng biểu đồ cột sử dụng Chart.js.
-Lưu trữ dữ liệu: Lưu trữ dữ liệu form vào localStorage để khôi phục khi tải lại trang.
+Dự án này là một ứng dụng web được xây dựng bằng Flask (Python) cho backend và HTML/CSS/JavaScript cho frontend, cho phép người dùng ước tính nỗ lực phát triển phần mềm bằng phương pháp Use Case Points (UCP). Điểm đặc biệt của ứng dụng là khả năng tích hợp với Google Gemini API để cung cấp các gợi ý thông minh cho các tham số UCP dựa trên mô tả hệ thống hoặc nội dung tài liệu được tải lên.
 
-Yêu cầu hệ thống
+## Mục lục
 
-Python: 3.8 trở lên
-Trình duyệt web: Chrome, Firefox, hoặc Edge (phiên bản mới nhất)
-Kết nối internet: Yêu cầu để gọi API Gemini
-Hệ điều hành: Windows, macOS, hoặc Linux
+* [Giới thiệu](#giới-thiệu)
+* [Tính năng](#tính-năng)
+* [Công nghệ sử dụng](#công-nghệ-sử-dụng)
+* [Điều kiện tiên quyết](#điều-kiện-tiên-quyết)
+* [Cài đặt và Khởi chạy](#cài-đặt-và-khởi-chạy)
+    * [Thiết lập Backend (Flask)](#thiết-lập-backend-flask)
+    * [Cấu hình Biến môi trường](#cấu-hình-biến-môi-trường)
+* [Cách sử dụng](#cách-sử-dụng)
+    * [Nhập liệu thủ công](#nhập-liệu-thủ-công)
+    * [Sử dụng tính năng Gợi ý AI](#sử-dụng-tính-năng-gợi-ý-ai)
+    * [Tải lên và Phân tích Tài liệu](#tải-lên-và-phân-tích-tài-liệu)
+    * [Tính toán UCP](#tính-toán-ucp)
+    * [Xem kết quả](#xem-kết-quả)
+    * [Đa ngôn ngữ](#đa-ngôn-ngữ)
+* [Cấu trúc Dự án](#cấu-trúc-dự-án)
+* [Chi tiết Kỹ thuật](#chi-tiết-kỹ-thuật)
+    * [Tính toán UCP](#tính-toán-ucp-1)
+    * [Tích hợp Gemini API](#tích-hợp-gemini-api)
+    * [Trích xuất văn bản](#trích-xuất-văn-bản)
+    * [Xử lý lỗi và Dự phòng](#xử-lý-lỗi-và-dự-phòng)
+* [Đóng góp](#đóng-góp)
+* [Giấy phép](#giấy-phép)
 
-Cài đặt
-1. Cài đặt môi trường
+## Giới thiệu
 
-Clone repository:
-git clone <repository-url>
-cd ucp-calculator
+Ước tính nỗ lực phần mềm là một bước quan trọng trong quản lý dự án. Phương pháp Use Case Points (UCP) cung cấp một cách tiếp cận dựa trên các trường hợp sử dụng của hệ thống để định lượng kích thước và từ đó ước tính nODE lực. Ứng dụng này không chỉ tự động hóa các phép tính UCP mà còn sử dụng trí tuệ nhân tạo để hỗ trợ người dùng trong việc xác định các tham số đầu vào, giúp quá trình ước tính nhanh chóng và có khả năng chính xác hơn, đặc biệt khi thông tin ban đầu còn hạn chế.
 
+## Tính năng
 
-Cài đặt Python và pip:Đảm bảo Python 3.8+ và pip đã được cài đặt. Kiểm tra phiên bản:
-python --version
-pip --version
+* **Nhập liệu UCP chi tiết:** Cho phép nhập số lượng Use Cases (Đơn giản, Trung bình, Phức tạp), Actors (Đơn giản, Trung bình, Phức tạp).
+* **Hệ số Kỹ thuật (TCF):** Nhập liệu 13 Yếu tố Kỹ thuật (T1-T13) với thang điểm từ 0-5.
+* **Hệ số Môi trường (EF):** Nhập liệu 8 Yếu tố Môi trường (E1-E8) với thang điểm từ 0-5.
+* **Tùy chỉnh Trọng số:** Cho phép người dùng tùy chỉnh trọng số cho các loại Use Case, Actor và số giờ mỗi UCP.
+* **Yếu tố Đội ngũ & Chi phí:**
+    * Nhập thông tin về kích thước đội ngũ (tổng số, junior, mid-level, senior).
+    * Nhập chi phí trung bình mỗi giờ.
+    * Điều chỉnh nỗ lực dựa trên kinh nghiệm trung bình của đội ngũ (lấy cảm hứng từ hệ số của COCOMO II).
+* **Gợi ý AI (Google Gemini):**
+    * Cung cấp gợi ý cho tất cả các tham số UCP, yếu tố kỹ thuật, môi trường, và đội ngũ dựa trên mô tả hệ thống bằng ngôn ngữ tự nhiên.
+    * Hiển thị ghi chú phân loại từ AI giải thích cách các giá trị được đề xuất.
+* **Phân tích Tài liệu:**
+    * Hỗ trợ tải lên file PDF, TXT, PNG, JPG, JPEG.
+    * Tự động trích xuất văn bản từ các định dạng file này.
+    * Sử dụng văn bản được trích xuất để yêu cầu gợi ý từ Gemini API.
+    * Hiển thị văn bản đã trích xuất.
+* **Tính toán và Hiển thị Kết quả:**
+    * Tính toán Unadjusted Use Case Weight (UUCW), Unadjusted Actor Weight (UAW).
+    * Tính toán Technical Complexity Factor (TCF), Environmental Factor (EF).
+    * Tính toán Use Case Points (UCP).
+    * Ước tính Tổng Nỗ lực (giờ) và Tổng Chi phí (USD).
+    * So sánh Nỗ lực Ước tính với Nỗ lực Thực tế (nếu được cung cấp) để tính toán Độ lệch và Độ chính xác.
+    * Hiển thị kết quả trực quan bằng biểu đồ cột (Estimated Effort vs Actual Effort) sử dụng Chart.js.
+* **Đa ngôn ngữ:** Hỗ trợ Tiếng Việt (mặc định) và Tiếng Anh, có thể chuyển đổi dễ dàng.
+* **Lưu trữ cục bộ:** Tự động lưu trữ dữ liệu form vào LocalStorage và khôi phục khi tải lại trang (trừ khi dữ liệu vừa được cập nhật từ file upload).
+* **Giao diện người dùng:**
+    * Thiết kế đáp ứng (responsive).
+    * Tooltip cung cấp thông tin giải thích cho từng trường nhập liệu.
+    * Thông báo trạng thái (loading, error) rõ ràng.
+    * Nút Reset để xóa toàn bộ form về giá trị mặc định.
 
+## Công nghệ sử dụng
 
-Tạo môi trường ảo:
-python -m venv venv
-source venv/bin/activate  # Linux/macOS
-venv\Scripts\activate     # Windows
+* **Backend:**
+    * Python 3.x
+    * Flask: Web framework.
+    * Requests: Thư viện HTTP để gọi Gemini API.
+    * PyPDF2: Trích xuất văn bản từ file PDF.
+    * Textract: Trích xuất văn bản từ hình ảnh (sử dụng Tesseract OCR) và các định dạng khác.
+    * python-dotenv: Quản lý biến môi trường.
+    * json-repair: Sửa lỗi JSON không hợp lệ từ API response.
+* **Frontend:**
+    * HTML5
+    * CSS3 (Giả định có file `static/css/styles.css`)
+    * JavaScript (ES6+)
+    * Chart.js: Vẽ biểu đồ.
+    * i18next: Hỗ trợ đa ngôn ngữ.
+* **API Bên ngoài:**
+    * Google Gemini API (Cụ thể là model `gemini-2.0-flash`): Cho tính năng gợi ý AI.
 
+## Điều kiện tiên quyết
 
-Cài đặt các thư viện cần thiết:
-pip install flask requests PyPDF2 textract python-dotenv json-repair
+Trước khi chạy ứng dụng, bạn cần cài đặt:
 
-Lưu ý: Để sử dụng textract cho trích xuất văn bản từ hình ảnh, bạn cần cài đặt Tesseract OCR:
+* Python 3.7 trở lên.
+* Pip (Trình quản lý gói cho Python).
+* Tesseract OCR: Cần thiết cho `textract` để xử lý file hình ảnh.
+    * **Windows:** Tải và cài đặt từ [UB Mannheim](https://github.com/UB-Mannheim/tesseract/wiki). Đảm bảo thêm đường dẫn cài đặt Tesseract vào biến môi trường PATH.
+    * **macOS:** `brew install tesseract`
+    * **Linux (Ubuntu/Debian):** `sudo apt-get install tesseract-ocr libtesseract-dev`
+* (Có thể cần) Các thư viện hệ thống khác tùy thuộc vào hệ điều hành của bạn để `textract` và `PyPDF2` hoạt động chính xác (ví dụ: `antiword` cho file .doc, `pdftotext` cho một số PDF).
 
-Windows: Tải và cài đặt Tesseract từ đây. Thêm Tesseract vào biến môi trường PATH.
-Linux: sudo apt-get install tesseract-ocr
+## Cài đặt và Khởi chạy
 
+### Thiết lập Backend (Flask)
 
-macOS:brew install tesseract
+1.  **Clone Repository:**
+    ```bash
+    git clone <your-repository-url>
+    cd <repository-name>
+    ```
 
+2.  **Tạo và Kích hoạt Môi trường ảo (Khuyến nghị):**
+    ```bash
+    python -m venv venv
+    # Windows
+    venv\Scripts\activate
+    # macOS/Linux
+    source venv/bin/activate
+    ```
 
+3.  **Cài đặt các Dependencies:**
+    Tạo file `requirements.txt` với nội dung sau:
+    ```txt
+    Flask
+    requests
+    PyPDF2
+    textract
+    python-dotenv
+    json-repair
+    # Thêm các thư viện khác nếu có
+    ```
+    Sau đó chạy:
+    ```bash
+    pip install -r requirements.txt
+    ```
 
+### Cấu hình Biến môi trường
 
-Cấu hình API Gemini:
+1.  Tạo một file tên là `.env` trong thư mục gốc của dự án.
+2.  Thêm khóa API của Google Gemini vào file `.env`:
+    ```env
+    GEMINI_API_KEY="YOUR_GEMINI_API_KEY"
+    ```
+    Thay thế `"YOUR_GEMINI_API_KEY"` bằng khóa API thực của bạn.
 
-Tạo tệp .env trong thư mục gốc của dự án.
-Thêm API key của Gemini:GEMINI_API_KEY=your_api_key_here
+### Khởi chạy ứng dụng
 
+1.  Chạy ứng dụng Flask:
+    ```bash
+    python app.py
+    ```
+2.  Mở trình duyệt và truy cập `http://127.0.0.1:5000/`.
 
-Để lấy API key, đăng ký tại Google Cloud Console và kích hoạt Gemini API.
+## Cách sử dụng
 
+Giao diện người dùng được chia thành nhiều phần trực quan:
 
+### Nhập liệu thủ công
 
-2. Cấu trúc thư mục
-ucp-calculator/
-├── static/
-│   ├── css/
-│   │   └── styles.css      # CSS cho giao diện
-├── templates/
-│   └── index.html          # Giao diện chính
-├── app.py                  # Backend Flask
-├── .env                    # Biến môi trường (API key)
-├── README.md               # Tài liệu hướng dẫn
-└── requirements.txt        # Danh sách thư viện Python
+* **Mô tả hệ thống:** Nhập mô tả ngắn gọn về hệ thống của bạn. Trường này được sử dụng cho tính năng Gợi ý AI.
+* **Use Cases & Actors:** Nhập số lượng use case và actor tương ứng với các mức độ phức tạp (Simple, Average, Complex).
+* **Yếu tố Kỹ thuật (T1-T13):** Đánh giá từng yếu tố từ 0 (không quan trọng/không áp dụng) đến 5 (rất quan trọng).
+* **Yếu tố Môi trường (E1-E8):** Đánh giá từng yếu tố từ 0 đến 5.
+* **Actual Effort:** Nhập số giờ nỗ lực thực tế (nếu có) để so sánh và đánh giá độ chính xác của ước tính.
+* **Tùy chỉnh trọng số:** Điều chỉnh các trọng số mặc định cho use case, actor và số giờ/UCP nếu cần.
+* **Yếu tố Đội ngũ:** Nhập thông tin về số lượng thành viên trong đội, số lượng thành viên theo kinh nghiệm (Junior, Mid-level, Senior), và chi phí trung bình mỗi giờ.
 
-3. Chạy ứng dụng
+### Sử dụng tính năng Gợi ý AI
 
-Đảm bảo môi trường ảo đã được kích hoạt.
-Chạy server Flask:python app.py
+1.  Nhập mô tả chi tiết về hệ thống vào ô "Mô tả hệ thống".
+2.  Nhấn nút "Gợi ý".
+3.  Ứng dụng sẽ gửi mô tả đến Gemini API.
+4.  Các trường nhập liệu (Use Cases, Actors, Yếu tố Kỹ thuật, Môi trường, Đội ngũ) sẽ được tự động điền với các giá trị gợi ý từ AI.
+5.  Một "Ghi chú phân loại" từ AI có thể được hiển thị, giải thích logic đằng sau các gợi ý.
+6.  Sau khi nhận gợi ý, ứng dụng sẽ tự động tính toán UCP.
 
+### Tải lên và Phân tích Tài liệu
 
-Mở trình duyệt và truy cập: http://localhost:5000
+1.  Nhấn vào "Choose File" trong phần "Upload Tài liệu" để chọn một file (PDF, TXT, PNG, JPG, JPEG).
+2.  Nhấn nút "Upload & Phân tích".
+3.  Văn bản sẽ được trích xuất từ file và hiển thị trong ô `textarea` bên dưới.
+4.  Văn bản này sau đó được gửi đến Gemini API để nhận gợi ý, tương tự như tính năng "Gợi ý".
+5.  Các trường sẽ được cập nhật và UCP sẽ được tự động tính toán.
 
-Sử dụng
+### Tính toán UCP
 
-Nhập mô tả hệ thống:
+Sau khi tất cả các trường cần thiết đã được điền (thủ công, qua gợi ý AI, hoặc qua phân tích tài liệu), nhấn nút "Tính UCP". Nếu tính năng gợi ý hoặc upload được sử dụng, việc tính toán sẽ diễn ra tự động sau khi nhận được dữ liệu từ AI.
 
-Nhập mô tả ngắn gọn về hệ thống vào ô "Mô tả hệ thống".
-Nhấn nút "Gợi ý" để nhận các thông số UCP được phân tích tự động.
+### Xem kết quả
 
+Phần "Kết quả ước lượng" sẽ hiển thị:
 
-Upload tài liệu:
+* Total UCP
+* Estimated Effort (giờ)
+* Total Cost (USD)
+* Technical Complexity Factor (TCF)
+* Environmental Factor (EF)
+* Actual Effort (nếu đã nhập)
+* Difference (so với Actual Effort)
+* Estimation Accuracy (%)
+* Biểu đồ cột so sánh Estimated Effort và Actual Effort.
 
-Chọn tệp PDF, TXT, hoặc hình ảnh (PNG, JPG, JPEG).
-Nhấn "指標
-Nhấn nút "Upload & Phân tích" để trích xuất và phân tích nội dung.
+### Đa ngôn ngữ
 
+Chọn ngôn ngữ (Tiếng Việt hoặc English) từ menu dropdown ở góc trên bên phải để thay đổi ngôn ngữ hiển thị của toàn bộ trang.
 
-Tùy chỉnh thông số:
-
-Điều chỉnh số lượng use cases, actors, yếu tố kỹ thuật/môi trường, trọng số, và thông tin đội ngũ theo nhu cầu.
-Nhập công sức thực tế (giờ) để so sánh với ước lượng.
-
-
-Tính toán UCP:
-
-Nhấn nút "Tính UCP" để nhận kết quả ước lượng, bao gồm UCP, công sức, chi phí, và độ chính xác.
-Kết quả sẽ được hiển thị dưới dạng biểu đồ và số liệu.
-
-
-Reset:
-
-Nhấn nút "Reset" để xóa toàn bộ dữ liệu và đặt lại các giá trị mặc định.
-
-
-
-API
-Ứng dụng sử dụng Gemini API để phân tích văn bản. Đảm bảo rằng tệp .env chứa GEMINI_API_KEY hợp lệ. API được gọi trong các endpoint /suggest và /upload để phân tích mô tả hệ thống hoặc nội dung tài liệu.
-Góp phần phát triển
-
-Fork repository và tạo branch cho tính năng mới:git checkout -b feature-name
-
-
-Commit thay đổi và tạo pull request:git commit -m "Mô tả thay đổi"
-git push origin feature-name
-
-
-Liên hệ với maintainer để xem xét pull request.
-
-Giấy phép
-Dự án được phát hành theo Giấy phép MIT.
-Liên hệ
-Nếu có thắc mắc hoặc cần hỗ trợ, liên hệ qua email: [your-email@example.com] hoặc tạo issue trên GitHub.
-Tác giả
-
-[Tên của bạn] - [Liên kết GitHub hoặc email]
-
-
-Ngày cập nhật cuối: 19/05/2025
+## Cấu trúc Dự án
